@@ -468,9 +468,84 @@
   .pay-modal .modal .pay-status.done { color: #27AE60; font-weight: 600; }
   .pay-modal .modal .pay-close-btn { background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: none; margin-top: 8px; }
   .pay-modal .modal .pay-close-btn:hover { background: var(--primary-light); }
+
+  /* ===== Code Login Screen ===== */
+  .code-login-screen { position: fixed; top:0; left:0; right:0; bottom:0; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); display:flex; align-items:center; justify-content:center; z-index:1000; padding:24px; }
+  .code-login-screen.hidden { display:none; }
+  .code-login-card { background:var(--card-bg); border-radius:16px; padding:40px 32px; max-width:380px; width:100%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+  .code-login-card .logo { font-size:48px; margin-bottom:8px; }
+  .code-login-card h2 { font-size:20px; color:var(--text); margin-bottom:4px; }
+  .code-login-card .subtitle { font-size:13px; color:var(--text-light); margin-bottom:24px; }
+  .code-login-card input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:10px; font-size:16px; text-align:center; letter-spacing:2px; outline:none; transition:all .2s; box-sizing:border-box; }
+  .code-login-card input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(47,84,150,0.1); }
+  .code-login-card input::placeholder { letter-spacing:0; font-size:14px; color:#bbb; }
+  .code-login-card .login-btn { width:100%; padding:12px; margin-top:12px; background:var(--primary); color:white; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+  .code-login-card .login-btn:disabled { opacity:.5; cursor:not-allowed; }
+  .code-login-card .login-error { color:var(--accent); font-size:13px; margin-top:10px; display:none; }
+  .code-login-card .login-error.show { display:block; }
+  .code-login-card .login-hint { font-size:12px; color:var(--text-light); margin-top:16px; line-height:1.5; }
+  .code-login-card .login-guide { margin-top:16px; font-size:12px; color:var(--text-light); }
+  .user-badge { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-light); padding:6px 12px; background:var(--bg); border-radius:8px; margin:0 16px; }
+  .user-badge .code-tag { font-weight:600; color:var(--primary); font-family:monospace; letter-spacing:1px; }
+  .user-badge .logout-btn { margin-left:auto; font-size:11px; color:var(--accent); cursor:pointer; text-decoration:underline; }
+  .user-badge .admin-link { font-size:10px; color:#ccc; cursor:pointer; margin-left:4px; text-decoration:none; }
+  .user-badge .tier-tag { font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600; }
+  .user-badge .tier-tag.free { background:#FFF3CD; color:#856404; }
+  .user-badge .tier-tag.basic { background:#D4EDDA; color:#155724; }
+  .user-badge .tier-tag.pro { background:#CCE5FF; color:#004085; }
+  .admin-panel { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:2000; background:var(--card-bg); border-radius:var(--radius); box-shadow:0 8px 40px rgba(0,0,0,0.2); padding:28px 24px; width:90%; max-width:480px; }
+  .admin-panel.show { display:block; }
+  .admin-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:1999; }
+  .admin-overlay.show { display:block; }
+  .admin-panel h3 { font-size:16px; margin-bottom:12px; }
+  .admin-panel .admin-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .admin-panel select,.admin-panel input[type="number"] { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:14px; }
+  .admin-panel input[type="password"] { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; }
+  .admin-panel .admin-btn { padding:8px 16px; background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
+  .admin-panel .admin-result { margin-top:10px; font-size:13px; background:var(--bg); padding:12px; border-radius:6px; display:none; max-height:300px; overflow-y:auto; }
+  .admin-panel .admin-result.show { display:block; }
+  .admin-panel .admin-result .code-list { font-family:monospace; font-size:14px; line-height:1.8; word-break:break-all; }
+  .admin-panel .admin-result .copy-btn { margin-top:8px; padding:6px 12px; background:var(--primary-light); color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+
 </style>
 </head>
 <body>
+<!-- Code Login Screen -->
+<div class="code-login-screen" id="codeLoginScreen">
+  <div class="code-login-card">
+    <div class="logo">🤔</div>
+    <h2>雪峰学长 · 升学咨询</h2>
+    <p class="subtitle">输入激活编码，开始你的升学咨询</p>
+    <input type="text" id="codeInput" placeholder="例如 ACTV-XXXX" maxlength="11"
+      oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter') loginWithCode()">
+    <button class="login-btn" id="loginBtn" onclick="loginWithCode()">激活</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">没有编码？<span onclick="showPurchaseGuide()" style="color:var(--primary);text-decoration:underline;cursor:pointer;">如何获取 →</span></div>
+    <div class="login-guide" id="purchaseGuide" style="display:none;border-top:1px solid var(--border);padding-top:12px;">
+      <p style="margin-bottom:4px;"><b>获取方式：</b> <span onclick="openAdminPanel()" style="color:#999;cursor:pointer;font-size:11px;float:right;">管理工具 ⚙️</span></p>
+      <p>1. 联系客服购买 ¥19.9 体验版（含PDF+3次AI对话）</p>
+      <p>2. 如果收到老师或朋友赠送的编码，直接输入即可</p>
+    </div>
+  </div>
+</div>
+
+  <div style="position:fixed;bottom:16px;right:16px;font-size:20px;cursor:pointer;opacity:0.4;z-index:1001;" onclick="openAdminPanel()" title="管理工具">⚙️</div><!-- Admin Overlay -->
+<div class="admin-overlay" id="adminOverlay" onclick="closeAdminPanel()"></div>
+<!-- Admin Panel -->
+<div class="admin-panel" id="adminPanel">
+  <h3>🔐 编码管理工具</h3>
+  <div class="admin-row">
+    <select id="adminTier"><option value="free">体验版 ¥19.9</option><option value="basic">标准版 ¥79.9</option><option value="pro">深度版 ¥129.9</option></select>
+    <input type="number" id="adminCount" value="5" min="1" max="100" style="width:60px;">
+    <input type="password" id="adminKeyInput" placeholder="管理密钥" style="width:120px;">
+    <button class="admin-btn" id="adminGenBtn" onclick="generateCodes()">生成编码</button>
+  </div>
+  <div class="admin-result" id="adminResult">
+    <div class="code-list" id="codeList"></div>
+    <button class="copy-btn" onclick="copyCodes()">📋 复制全部</button>
+  </div>
+</div>
+
 
 <!-- Header -->
 <div class="header">
@@ -678,10 +753,12 @@
         <textarea id="userInput" rows="2" placeholder="输入你家孩子的情况... (Enter发送，Shift+Enter换行)" onkeydown="handleKeydown(event)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
       </div>
+
       <div class="input-footer">
         <span id="chatStatus">请先设置API Key</span>
         <span id="timerFooter">--:--</span>
       </div>
+      <div class="disclaimer-bar">⚠️ 数据来源于互联网公开报告及行业估算，仅供参考。AI建议不构成最终填报决策依据。</div>
     </div>
   </div>
 
@@ -694,21 +771,44 @@
 // =====================================================
 // System Prompt (张雪峰 style)
 // =====================================================
-const SYSTEM_PROMPT = `你是雪峰学长，国内升学规划AI助手。
+const SYSTEM_PROMPT = `你是雪峰学长，国内升学规划AI助手。覆盖高考统招、艺考、体育单招、港澳台联考、复读规划等升学场景。薪资数据为应届生入职1-3年中位数参考，来源于多渠道综合估算（前程理工报告、麦可思研究院、各高校就业质量报告等），非精确统计，供相对比较参考。
 
 ## 人设
 - 说话方式：短句、语速快、东北口吻、直接了当
-- 核心原则：从来不说废话，不给模糊建议
+- 核心原则：给方向、给比较、给数据，不编造不存在的信息
 - 你的存在是为了让普通家庭的孩子少走弯路
+- 对于无确切数据的问题（如"明年分数线会涨吗"），坦诚告知不确定性，给出历史趋势和理性判断
+
+## 适用人群（根据提问自动识别）
+- 高考统考生：主流场景，按分数+省份+选科推荐院校专业
+- 复读生：帮助评估复读决策，预估下一年分数线趋势、就业前景预判
+- 艺考生（美术/音乐/舞蹈/传媒/播音/书法等）：按统考分+文化分+选科分析，说明省统考→校考→综合分录取路径
+- 体育生：按体育统考、体育单招、高水平运动队三条路径分析
+- 港澳台华侨联考生：按联考分数+文理科分析，告知联考最低线和高分线
 
 ## 回答流程（严格执行）
-家长提问 → Step1 先反问关键信息（多少分？哪个省？选科？家庭条件？）
+Step1 先判断用户属于哪类考生，反问关键信息（统考生问分数+省份+选科，艺考生问统考分+文化分+方向，复读生问当前分数+复读预期，联考生问分数+文理科）
 → Step2 等待回答 → Step3 给出明确判断+数据支持+替代方案
 
 ## 回答三要素（缺一不可）
-1. 明确结论：「能报」「不建议」「有条件可以冲」
+1. 明确结论：「能报」「不建议」「有条件可以冲」「建议复读/不建议复读」
 2. 数据支撑：「这个专业中位数薪资X万，就业率X%，5年留存率X%」
 3. 替代方案：「你这分数，与其报XX，不如试试YY」
+
+## 复读决策要点（供参考，非精准预测）
+- 明年分数线趋势：各省分数线每年有小幅波动（一般±5-10分），暴涨暴跌概率低
+- 是否建议复读：看当前分数离目标差距（<30分可考虑，>80分谨慎），看考生潜力（平时成绩 vs 高考发挥），看家庭经济条件（复读一年成本）
+- 4年后就业预判：AI/数字化类岗位需求持续增长，传统工科需求稳定，文科类更看重学校和证书
+
+## 艺考/体育生要点
+- 艺考三条路：省统考（多数院校承认）→ 校考（顶尖艺术院校+部分名校）→ 高考 → 按综合分录取。综合分=专业分×系数+文化分×系数，各省各校比例不同
+- 体育生三条路：体育统考（体育教育等专业）、体育单招（运动训练等专业）、高水平运动队（特长生降分录取）
+- 薪资数据提示：艺术/体育类专业就业面相对窄，择业时建议考虑"主专业+辅修技能"的组合
+
+## 港澳台联考须知
+- 2025/2026年最低录取分数线：本科文史类430分、理工类460分；高分线文史类510分、理工类560分；预科文史类330分、理工类360分（数据来源于广东省教育考试院，2026年联考分数线公布后可更新）
+- 联考薪资数据：毕业后进入同一就业市场，以下专业薪资数据同样适用
+- 注意：各院校具体联考录取分数线每年变动，建议确认目标院校招生网最新信息
 
 ## 绝对禁止的词汇
 「可能」「或许」「这取决于个人情况」「看你怎么想」「前景不错」「就业面广」
@@ -719,19 +819,101 @@ const SYSTEM_PROMPT = `你是雪峰学长，国内升学规划AI助手。
 3. 阶层现实主义：家里没矿先谋生再谋爱
 4. 家庭背景分流：有矿和没矿策略完全不同
 
-## 专业数据（关键数据速查）
-- 计算机科学与技术: 18万,92%,78% | 软件工程: 19万,93%,80%
-- 人工智能: 22万,91%,72% | 电子信息工程: 15万,90%,75%
-- 电气自动化: 14万,93%,82% | 临床医学: 12万,95%,89%
-- 口腔医学: 20万,96%,91% | 金融学: 10万,83%,60%
-- 会计学: 9万,88%,70% | 法学: 8万,79%,55%
-- 新闻传播: 7万,74%,48% "打晕别报"
-- 土木工程: 9万,82%,50% "快跑"
-- 生物工程: 8万,72%,48% "不读到博士别碰"
+## 专业数据（2026年最新，涵盖120+专业，关键数据速查）
+
+### 💻 IT/计算机类（高薪主力）
+- 人工智能: 25万,89%,70% | 计算机科学与技术: 20万,90%,75%
+- 软件工程: 21万,92%,78% | 信息安全: 22万,94%,85%
+- 数据科学与大数据技术: 23万,88%,72% | 物联网工程: 17万,85%,68%
+- 通信工程: 14万,86%,65% | 微电子科学与工程: 18万,92%,80%
+- 网络工程: 16万,86%,70% | 数字媒体技术: 14万,82%,60%
+- 智能科学与技术: 24万,87%,68% | 电子与计算机工程: 19万,88%,72%
+- 密码科学与技术: 20万,90%,78%
+
+### ⚡ 工科类（就业面广）
+- 自动化: 13万,90%,75% | 电气工程及其自动化: 15万,91%,80%
+- 机械设计制造及其自动化: 11万,85%,70% | 车辆工程: 13万,88%,72%
+- 新能源科学与工程: 14万,82%,65% | 机器人工程: 16万,88%,70%
+- 材料科学与工程: 10万,78%,55% | 冶金工程: 9万,76%,55%
+- 化学工程与工艺: 9万,76%,50% | 环境工程: 8.5万,75%,55%
+- 水利水电工程: 10万,80%,65% | 测绘工程: 9万,82%,60%
+- 地质工程: 8万,78%,55% | 采矿工程: 10万,85%,65%
+- 石油工程: 12万,82%,60% | 纺织工程: 7万,76%,52%
+- 食品科学与工程: 8万,80%,58% | 交通运输: 11万,84%,68%
+- 船舶与海洋工程: 11万,82%,60% | 飞行器设计与工程: 15万,88%,70%
+- 核工程与核技术: 13万,85%,68% | 生物医学工程: 12万,80%,60%
+- 城乡规划: 9万,82%,58%
+
+### 🏥 医学类（越老越值钱）
+- 临床医学: 13万,93%,87% | 口腔医学: 22万,95%,90%
+- 麻醉学: 14万,94%,85% | 医学影像学: 12万,92%,82%
+- 眼视光医学: 15万,90%,78% | 儿科学: 11万,92%,85%
+- 精神医学: 10万,78%,60% | 法医学: 10万,88%,75%
+- 针灸推拿学: 8万,80%,72% | 中医学: 8万,82%,75%
+- 药学: 10万,90%,80% | 护理学: 7万,92%,78% "辛苦但就业稳"
+- 康复治疗学: 8万,85%,65%
+
+### 💰 经管类（热门但分化大）
+- 金融学: 11万,80%,55% | 会计学: 10万,86%,68%
+- 财务管理: 10万,84%,65% | 经济学: 9万,78%,50%
+- 审计学: 11万,85%,62% | 国际经济与贸易: 8万,75%,48%
+- 人力资源管理: 7.5万,78%,55% | 行政管理: 7万,76%,52%
+- 物流管理: 8万,80%,55% | 物流工程: 9万,82%,58%
+- 市场营销: 7.5万,75%,45% | 旅游管理: 6万,72%,42%
+- 财政学: 9万,82%,60% | 税收学: 9.5万,84%,62%
+- 电子商务: 8.5万,80%,52%
+
+### 🔬 理科类（基础+应用）
+- 统计学: 12万,85%,65% | 数学与应用数学: 10万,80%,55%
+- 信息与计算科学: 11万,82%,58% | 应用物理学: 8万,75%,50%
+- 应用化学: 7.5万,76%,48% | 生物科学: 7万,68%,42%
+- 生物技术: 7.5万,70%,45% | 海洋科学: 8万,72%,50%
+- 大气科学: 8万,78%,55% | 地质学: 7万,74%,52%
+- 地理科学: 7万,76%,55% | 天文学: 8万,70%,48%
+
+### 📖 文科类（两极分化）
+- 法学: 8.5万,76%,50% "打晕别报"（考公/法考两条路）
+- 新闻传播: 7.5万,70%,45% "打晕别报"
+- 汉语言文学: 6.5万,72%,50% "考公对口"
+- 英语: 7万,75%,48% "建议辅修其他专业"
+- 心理学: 7万,68%,45%
+- 哲学: 6万,65%,40% | 历史学: 6.5万,68%,45%
+- 考古学: 7万,70%,50% | 社会学: 7万,72%,48%
+- 教育学: 7万,78%,55% | 学前教育: 5.5万,90%,65% "缺老师"
+- 特殊教育: 6万,85%,70% | 体育教育: 6万,80%,60%
+- 日语: 7.5万,72%,45% | 法语: 8万,70%,42%
+
+### 🎨 艺术与设计类（专业对口就业窄，薪资范围仅供参考）
+- 视觉传达设计: 7万,72%,45% | 环境设计: 7.5万,70%,42%
+- 服装设计与工程: 6.5万,68%,40% | 数字媒体艺术: 9万,75%,50%
+- 动画: 9万,75%,48% | 摄影: 7万,65%,38%
+- 美术学: 6万,68%,45% | 绘画: 5.5万,60%,35%
+- 雕塑: 5.5万,62%,38% | 中国画: 5万,58%,35%
+- 音乐表演: 5万,60%,35% | 音乐学: 5.5万,65%,40%
+- 舞蹈表演: 4.5万,58%,32% | 舞蹈编导: 5万,60%,35%
+- 表演: 6万,55%,30% "头部和尾部差距极大"
+- 播音与主持艺术: 7万,68%,38% | 广播电视编导: 6.5万,65%,38%
+- 书法学: 5万,60%,35%
+
+### 🏃 体育类
+- 体育教育: 6万,80%,60% | 运动训练: 6.5万,72%,48%
+- 社会体育指导与管理: 5.5万,75%,50% | 运动人体科学: 5.5万,70%,45%
+- 武术与民族传统体育: 5万,68%,42%
+
+### 🌾 农林/其他类
+- 农学: 6万,75%,50% | 动物医学: 8万,85%,65%
+- 动物科学: 6.5万,78%,55% | 园林: 7万,78%,55%
+- 林学: 6万,72%,50% | 茶学: 6万,70%,48%
+- 水产养殖学: 6.5万,74%,52% | 种子科学与工程: 6万,76%,55%
+- 建筑学: 10万,85%,60% "五年制，需熬资历"
+- 土木工程: 10万,78%,48% "快跑"
+- 生物工程: 9万,68%,45% "不读到博士别碰"
 
 ## 反滥用规则
 - 本对话只绑定一个学生/家庭的升学咨询。你要在对话中自然地记住用户的分数、省份、选科
-- 如果用户突然问到明显不同的情况（比如之前一直在问580分，突然问380分，或改了省份/选科），你要警觉，并提示：「嗯？你问的分数/情况好像和之前不一样了。如果是在帮别的同学问，建议重新开始一个新对话哦～这样信息更准确。如果还是同一个学生只是分数变化了，跟我说一声就行」
+- 如果用户突然问到明显不同的情况（比如之前一直在问580分，突然问380分，或改了省份/选科），你要警觉：
+  — 如果是复读生（用户明确说"复读""明年重考"等），属于合理情况，不需要警告，正常回答并记住复读这个背景
+  — 如果不是复读场景，则提示：「嗯？你问的分数/情况好像和之前不一样了。如果是在帮别的同学问，建议重新开始一个新对话哦～这样信息更准确。如果还是同一个学生只是分数变化了，跟我说一声就行」
 - 129.9「别后悔」不限时对话是为一个家庭的深度咨询设计的，不是为共享账号准备的
 - 如果用户多次切换不同学生的分数/情况，委婉但坚定地引导：每次对话集中服务一个孩子
 `;
@@ -784,6 +966,8 @@ let secondsLeft = 0;
 const BASIC_TIME = 30 * 60; // 30 min
 const PRO_TIME = 999 * 60;  // effectively unlimited
 let basicTimerStarted = false;
+let savedCode = localStorage.getItem('savedCode') || '';
+let userDataLoaded = false;
 
 // =====================================================
 
@@ -954,7 +1138,11 @@ function checkContextChange(newText) {
 
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
-  switchTier('free');
+  if (savedCode) {
+    restoreUserSession();
+  } else {
+    document.getElementById('codeLoginScreen').classList.remove('hidden');
+  }
 });
 
 // =====================================================
@@ -1024,14 +1212,18 @@ function switchTier(tier) {
     document.getElementById('chatStatus').textContent = AI_WORKER_URL ? `✅ 还可提问 ${MAX_TRIAL - trialCount} 次` : '⏳ AI服务配置中...';
   }
 
-  // Update timer
+  // Update timer (skip reset if restoring from server)
   if (isBasic) {
-    secondsLeft = BASIC_TIME;
-    basicTimerStarted = false;
+    if (!userDataLoaded) {
+      secondsLeft = BASIC_TIME;
+      basicTimerStarted = false;
+    }
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 30分钟版';
     document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接' : '⏳ AI服务配置中...';
   } else if (isPro) {
-    secondsLeft = PRO_TIME;
+    if (!userDataLoaded) {
+      secondsLeft = PRO_TIME;
+    }
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 深度版（不限时）';
     document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接（不限时）' : '⏳ AI服务配置中...';
   }
@@ -1057,6 +1249,7 @@ function startTimer() {
   timerInterval = setInterval(() => {
     secondsLeft--;
     updateTimerDisplay();
+    if (currentTier === 'basic' && secondsLeft > 0 && secondsLeft % 10 === 0) saveUserData();
     if (secondsLeft <= 0) {
       stopTimer();
       if (currentTier === 'basic') {
@@ -1180,6 +1373,8 @@ async function sendMessage() {
       ...messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
       { role: 'user', content: text }
     ];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     const resp = await fetch(AI_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1187,8 +1382,10 @@ async function sendMessage() {
         messages: messagesToSend,
         temperature: 0.7,
         max_tokens: 2000
-      })
+      }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     if (!resp.ok) {
       const errText = await resp.text();
       throw new Error(`API错误 (${resp.status})`);
@@ -1202,23 +1399,27 @@ async function sendMessage() {
     messages.push({ role: 'assistant', content: reply });
     document.getElementById('chatStatus').textContent = '✅ 已回复';
 
-    // Store student context for anti-abuse
-    if (!studentContext && messages.filter(function(m) { return m.role === 'user'; }).length >= 1) {
-      var ctx = extractStudentContext(text);
-      if (ctx.score || ctx.province) {
-        studentContext = JSON.stringify(ctx);
-        localStorage.setItem('student_context', studentContext);
-      }
-    }
-    // Update trial counter
+    // AI 回答成功后扣除提问次数
     if (currentTier === 'free') {
       trialCount++;
       const remaining = MAX_TRIAL - trialCount;
       document.getElementById('trialDisplay').textContent = `✉️ 剩余${remaining}条`;
       document.getElementById('chatStatus').textContent = `✅ 还可提问 ${remaining} 次`;
       if (remaining <= 0) {
-        document.getElementById('trialDisplay').textContent = '✉️ 已用完';
+        document.getElementById('trialDisplay').textContent = '✉️ 已用完 · 升级继续';
         document.getElementById('chatStatus').textContent = '⏰ 免费试聊已用完，升级79.9继续咨询';
+        showUpgradePrompt();
+      }
+    }
+
+    saveUserData();
+
+    // Store student context for anti-abuse
+    if (!studentContext && messages.filter(function(m) { return m.role === 'user'; }).length >= 1) {
+      var ctx = extractStudentContext(text);
+      if (ctx.score || ctx.province) {
+        studentContext = JSON.stringify(ctx);
+        localStorage.setItem('student_context', studentContext);
       }
     }
   } catch (err) {
@@ -1250,6 +1451,214 @@ document.getElementById('userInput').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 100) + 'px';
 });
+
+// =====================================================
+// Code Login System
+// =====================================================
+
+function showPurchaseGuide() {
+  var g = document.getElementById('purchaseGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
+
+async function loginWithCode() {
+  var code = document.getElementById('codeInput').value.trim().toUpperCase();
+  var errorEl = document.getElementById('loginError');
+  var btn = document.getElementById('loginBtn');
+  if (!code) { errorEl.textContent = '请输入激活编码'; errorEl.classList.add('show'); return; }
+  btn.disabled = true;
+  btn.textContent = '验证中...';
+  errorEl.classList.remove('show');
+  try {
+    var resp = await fetch(WORKER_URL + '/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    });
+    var data = await resp.json();
+    if (!data.success) {
+      errorEl.textContent = data.error || '编码无效';
+      errorEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '激活';
+      return;
+    }
+    // 登录成功
+    savedCode = code;
+    localStorage.setItem('savedCode', code);
+    document.getElementById('codeLoginScreen').classList.add('hidden');
+    applyUserData(data.user);
+    if (data.first_login) {
+      switchTier(data.user.tier);
+    }
+  } catch (e) {
+    errorEl.textContent = '网络错误，请检查网络后重试';
+    errorEl.classList.add('show');
+  }
+  btn.disabled = false;
+  btn.textContent = '激活';
+}
+
+function applyUserData(user) {
+  if (!user) return;
+  currentTier = user.tier || 'free';
+  paidAmount = user.paid_amount || 0;
+  messages = user.messages || [];
+  trialCount = user.trial_count || 0;
+  secondsLeft = user.timer_remaining !== null && user.timer_remaining !== undefined ? user.timer_remaining : (user.tier === 'pro' ? PRO_TIME : user.tier === 'basic' ? BASIC_TIME : 0);
+  basicTimerStarted = user.timer_started || false;
+  userDataLoaded = true;
+
+  localStorage.setItem('paid_amount', paidAmount.toString());
+  localStorage.setItem('user_id', 'usr-' + savedCode);
+
+  // Update user badge
+  var badge = document.getElementById('userBadge');
+  if (badge) {
+    badge.style.display = 'flex';
+    document.getElementById('userCodeTag').textContent = savedCode;
+    var tierNames = { free: '体验版', basic: '标准版', pro: '深度版' };
+    var tag = document.getElementById('userTierTag');
+    tag.textContent = tierNames[user.tier] || '体验版';
+    tag.className = 'tier-tag ' + (user.tier || 'free');
+  }
+
+  // Render saved messages
+  var chat = document.getElementById('chatArea');
+  var empty = document.getElementById('emptyState');
+  if (empty) empty.style.display = 'none';
+  chat.innerHTML = '';
+  (messages || []).forEach(function(m) {
+    addMessage(m.role, m.content);
+  });
+
+  if (messages && messages.length > 0 && empty) empty.style.display = 'none';
+
+  // Switch to user's tier
+  switchTier(currentTier);
+
+  // If basic timer was started, resume it
+  if (currentTier === 'basic' && basicTimerStarted && secondsLeft > 0) {
+    startTimer();
+  }
+}
+
+async function restoreUserSession() {
+  try {
+    var resp = await fetch(WORKER_URL + '/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: savedCode })
+    });
+    var data = await resp.json();
+    if (data.success) {
+      applyUserData(data.user);
+    } else {
+      localStorage.removeItem('savedCode');
+      savedCode = '';
+      document.getElementById('codeLoginScreen').classList.remove('hidden');
+    }
+  } catch (e) {
+    // Network error - still show the app with local data
+    document.getElementById('codeLoginScreen').classList.add('hidden');
+    switchTier('free');
+  }
+}
+
+function switchAccount() {
+  localStorage.removeItem('savedCode');
+  savedCode = '';
+  messages = [];
+  trialCount = 0;
+  userDataLoaded = false;
+  document.getElementById('chatArea').innerHTML = '';
+  location.reload();
+}
+
+async function saveUserData() {
+  if (!savedCode || !userDataLoaded) return;
+  try {
+    await fetch(WORKER_URL + '/user/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: savedCode,
+        messages: messages,
+        trial_count: trialCount,
+        timer_remaining: secondsLeft,
+        timer_started: basicTimerStarted
+      })
+    });
+  } catch (e) { /* silent fail - save best effort */ }
+}
+
+// =====================================================
+// Admin: Generate Codes
+// =====================================================
+
+function openAdminPanel() {
+  document.getElementById('adminPanel').classList.add('show');
+  document.getElementById('adminOverlay').classList.add('show');
+}
+function closeAdminPanel() {
+  document.getElementById('adminPanel').classList.remove('show');
+  document.getElementById('adminOverlay').classList.remove('show');
+}
+
+function generateCodes() {
+  var tier = document.getElementById('adminTier').value;
+  var count = parseInt(document.getElementById('adminCount').value) || 5;
+  var adminKey = document.getElementById('adminKeyInput').value;
+  var btn = document.getElementById('adminGenBtn');
+  var result = document.getElementById('adminResult');
+  var list = document.getElementById('codeList');
+
+  if (!adminKey) { alert('请输入管理密钥'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  fetch(WORKER_URL + '/admin/create-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tier: tier, count: count, adminKey: adminKey })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      list.textContent = data.codes.join('\n');
+      result.classList.add('show');
+    } else {
+      alert('生成失败: ' + (data.error || '未知错误'));
+    }
+  })
+  .catch(function(err) {
+    alert('网络错误: ' + err.message);
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.textContent = '生成编码';
+  });
+}
+
+function copyCodes() {
+  var text = document.getElementById('codeList').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已复制 ' + text.split('\n').length + ' 个编码');
+    });
+  } else {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('已复制');
+  }
+}
+
 </script>
 <!-- Payment Modal -->
 <div class="pay-modal" id="payModal">
