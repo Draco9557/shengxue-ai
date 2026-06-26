@@ -687,21 +687,6 @@
 
 </div>
 
-<!-- API Key Modal -->
-<div class="overlay" id="apiModal">
-  <div class="modal">
-    <h3>🔑 设置API Key</h3>
-    <p>79.9/129.9套餐需要AI接口才能工作</p>
-    <ol>
-      <li>打开 platform.deepseek.com 注册</li>
-      <li>进入「API Keys」创建Key</li>
-      <li>复制Key粘贴到下方</li>
-    </ol>
-    <input type="password" id="apiKeyInput" placeholder="粘贴你的 sk-..." />
-    <button class="btn" onclick="saveApiKey()">✅ 保存并开始</button>
-    <div style="text-align:center;margin-top:6px;">
-      <button class="link-btn" onclick="window.open('https://platform.deepseek.com','_blank')">去注册 DeepSeek</button>
-    </div>
   </div>
 </div>
 
@@ -781,7 +766,6 @@ if (activate) {
 }
 
 // =====================================================
-let apiKey = localStorage.getItem('deepseek_api_key') || '';
 let messages = [];
 let trialCount = 0;
 const MAX_TRIAL = 3;
@@ -794,6 +778,7 @@ const MAX_CONTEXT_WARNINGS = 3;
 let timerInterval = null;
 let pollTimer = null;
 const WORKER_URL = ''; // 部署后改为 Worker 地址，如 https://xxx.workers.dev
+const AI_WORKER_URL = ''; // AI代理地址，部署后填写
 let userId = localStorage.getItem('user_id') || '';
 let secondsLeft = 0;
 const BASIC_TIME = 30 * 60; // 30 min
@@ -968,9 +953,6 @@ function checkContextChange(newText) {
 
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
-  if (apiKey) {
-    document.getElementById('apiKeyInput').value = apiKey;
-  }
   switchTier('free');
 });
 
@@ -1028,51 +1010,32 @@ function switchTier(tier) {
     lockOverlay.className = 'chat-locked';
     chatArea.style.display = '';
     inputArea.style.display = '';
-    if (!isFree) setupChat();
   }
 
   // Trial counter for free tier
   if (isFree) {
-    if (apiKey) {
-      trialSpan.style.display = '';
-      trialSpan.textContent = `✉️ 剩余${MAX_TRIAL - trialCount}条`;
-    }
+    trialSpan.style.display = "";
+    trialSpan.textContent = `✉️ 剩余${MAX_TRIAL - trialCount}条`;
     document.querySelector('.chat-header .info').textContent = '💬 AI试聊（3条免费）';
-    document.getElementById('chatStatus').textContent = apiKey ? `✅ 还可提问 ${MAX_TRIAL - trialCount} 次` : '⚠️ 请设置API Key';
+    document.getElementById('chatStatus').textContent = AI_WORKER_URL ? `✅ 还可提问 ${MAX_TRIAL - trialCount} 次` : '⏳ AI服务配置中...';
   }
 
   // Update timer
   if (isBasic) {
     secondsLeft = BASIC_TIME;
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 30分钟版';
-    document.getElementById('chatStatus').textContent = apiKey ? '✅ 已连接' : '⚠️ 请设置API Key';
+    document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接' : '⏳ AI服务配置中...';
   } else if (isPro) {
     secondsLeft = PRO_TIME;
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 深度版（不限时）';
-    document.getElementById('chatStatus').textContent = apiKey ? '✅ 已连接（不限时）' : '⚠️ 请设置API Key';
+    document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接（不限时）' : '⏳ AI服务配置中...';
   }
   updateTimerDisplay();
   stopTimer();
-  if (!isFree && apiKey) startTimer();
+  if (!isFree) startTimer();
 }
 
-function setupChat() {
-  if (!apiKey) {
-    document.getElementById('apiModal').classList.add('show');
-  }
-}
 
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) { alert('请输入API Key'); return; }
-  if (!key.startsWith('sk-')) { alert('Key格式不对，应该以 sk- 开头'); return; }
-  apiKey = key;
-  localStorage.setItem('deepseek_api_key', key);
-  document.getElementById('apiModal').classList.remove('show');
-  document.getElementById('chatStatus').textContent = '✅ 已连接';
-  document.getElementById('timerDisplay').classList.remove('warning');
-  startTimer();
-}
 
 // =====================================================
 // Timer
@@ -1154,7 +1117,6 @@ async function sendMessage() {
   const input = document.getElementById('userInput');
   const text = input.value.trim();
   if (!text || isProcessing) return;
-  if (!apiKey) { document.getElementById('apiModal').classList.add('show'); return; }
   // Anti-abuse context check for pro tier
   if (currentTier === 'pro' && studentContext) {
     var ctxWarn = checkContextChange(text);
@@ -1200,19 +1162,16 @@ async function sendMessage() {
   const loadingBubble = addMessage('assistant', 'loading');
 
   try {
-    const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const messagesToSend = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
+      { role: 'user', content: text }
+    ];
+    const resp = await fetch(AI_WORKER_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: text }
-        ],
+        messages: messagesToSend,
         temperature: 0.7,
         max_tokens: 2000
       })
@@ -1251,7 +1210,7 @@ async function sendMessage() {
     }
   } catch (err) {
     loadingBubble.classList.remove('loading');
-    loadingBubble.textContent = `❌ 出错了：${err.message}\n\n请检查：\n1. API Key是否正确\n2. 网络是否通畅\n3. 额度是否充足`;
+    loadingBubble.textContent = `❌ 出错了：${err.message}\n\n请联系客服处理`;
     document.getElementById('chatStatus').textContent = '❌ 出错';
   }
   isProcessing = false;
