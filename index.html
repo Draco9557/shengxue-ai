@@ -525,7 +525,7 @@
       <div class="pdf-icon"><span class="icon-text">7个问题</span></div>
       <div class="pdf-title">选专业前必须问自己的7个问题</div>
       <div class="pdf-desc">张雪峰式决策框架 · 就业倒推法<br/>花10分钟看完，避开80%的志愿坑</div>
-      <a class="download-btn" href="选专业前必须问自己的7个问题.pdf" download>📥 免费下载 PDF</a>
+      <a class="download-btn" href="选专业前必须问自己的7个问题.pdf" download target="_blank" rel="noopener">📥 免费下载 PDF</a>
     </div>
     <div class="pdf-questions">
       <div class="q-item"><span class="q-num">1</span> 你孩子多少分？——没分谈什么专业</div>
@@ -593,7 +593,7 @@
     <div style="padding:0 16px;">
       <div style="background:#F0F4FF;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
         <span>📖</span>
-        <span><b>随单附赠：</b><a href="选专业前必须问自己的7个问题.pdf" download style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
+<span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
       </div>
     </div>
     <div style="text-align:center;padding:16px;">
@@ -645,7 +645,7 @@
     <div style="padding:0 16px 16px;">
       <div style="background:#F0F4FF;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;">
         <span>📖</span>
-        <span><b>随单附赠：</b><a href="选专业前必须问自己的7个问题.pdf" download style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
+        <span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
       </div>
     </div>
   </div>
@@ -783,6 +783,7 @@ let userId = localStorage.getItem('user_id') || '';
 let secondsLeft = 0;
 const BASIC_TIME = 30 * 60; // 30 min
 const PRO_TIME = 999 * 60;  // effectively unlimited
+let basicTimerStarted = false;
 
 // =====================================================
 
@@ -963,8 +964,11 @@ function switchTier(tier) {
   currentTier = tier;
   document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('active'));
   document.querySelector(`.tier-card[data-tier="${tier}"]`).classList.add('active');
-  if (tier !== 'free') {
-    trialCount = MAX_TRIAL; // auto-unlock trial limit
+ if (tier !== 'free') {
+    if (window._savedTrialCount === undefined) window._savedTrialCount = trialCount;
+    trialCount = MAX_TRIAL;
+  } else if (window._savedTrialCount !== undefined) {
+    trialCount = window._savedTrialCount;
   }
   document.getElementById('trialDisplay').style.display = 'none';
   const trialSpan = document.getElementById('trialDisplay');
@@ -1023,6 +1027,7 @@ function switchTier(tier) {
   // Update timer
   if (isBasic) {
     secondsLeft = BASIC_TIME;
+    basicTimerStarted = false;
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 30分钟版';
     document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接' : '⏳ AI服务配置中...';
   } else if (isPro) {
@@ -1032,7 +1037,9 @@ function switchTier(tier) {
   }
   updateTimerDisplay();
   stopTimer();
-  if (!isFree) startTimer();
+  document.getElementById('timerDisplay').classList.remove('warning');
+  document.getElementById('userInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
 }
 
 
@@ -1157,6 +1164,12 @@ async function sendMessage() {
   isProcessing = true;
   document.getElementById('sendBtn').disabled = true;
   document.getElementById('chatStatus').textContent = '⏳ AI思考中...';
+
+  // Start 30-min timer from first user message for basic tier
+  if (currentTier === 'basic' && !basicTimerStarted) {
+    basicTimerStarted = true;
+    startTimer();
+  }
 
   addMessage('user', text);
   const loadingBubble = addMessage('assistant', 'loading');
