@@ -456,7 +456,7 @@
   .chat-locked .lock-btn:hover { background: var(--primary-light); }
 
   /* ===== Pay Modal ===== */
-  .pay-modal { display: none; position: fixed; z-index: 200; align-items: center; justify-content: center; }
+  .pay-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
   .pay-modal.show { display: flex; }
   .pay-modal .modal { background: white; border-radius: 16px; padding: 24px; max-width: 340px; width: 90%; text-align: center; }
   .pay-modal .modal h3 { font-size: 18px; margin-bottom: 4px; }
@@ -1062,9 +1062,10 @@ function getTierPrice(tier) {
 }
 
 function buyTier(tier) {
+  // Only auto-switch when server data confirms user already paid enough
   var targetPrice = getTierPrice(tier);
   var amountDue = Math.max(0, targetPrice - paidAmount);
-  if (paidAmount >= targetPrice) { switchTier(tier); return; }
+  if (paidAmount >= targetPrice) { if (userDataLoaded) switchTier(tier); else createPayment(tier); return; }
   createPayment(tier);
 }
 
