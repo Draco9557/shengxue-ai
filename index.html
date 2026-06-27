@@ -1058,6 +1058,40 @@ function closePayModal() {
 // =====================================================
 // Pricing & Upgrade Helpers
 // =====================================================
+// Load QR code image with auto-retry
+function loadQRCode(orderId) {
+  if (window._qrRetry === undefined) window._qrRetry = 0;
+  var maxRetries = 5;
+  var qrDiv = document.getElementById('payQR');
+  function tryLoad() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', WORKER_URL + '/pay/qr-image?order_id=' + orderId, true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        var resp = JSON.parse(xhr.responseText);
+        if (resp.qrcode) {
+          qrDiv.innerHTML = '<img src="' + resp.qrcode + '" alt="支付二维码" style="width:180px;height:180px;">';
+          window._qrRetry = 0;
+          return;
+        }
+      }
+      retryOrFail();
+    };
+    xhr.onerror = retryOrFail;
+    xhr.send();
+  }
+  function retryOrFail() {
+    window._qrRetry++;
+    if (window._qrRetry <= maxRetries) {
+      setTimeout(tryLoad, 1000);
+    } else {
+      window._qrRetry = 0;
+      qrDiv.innerHTML = '<div style="font-size:13px;color:#999;">二维码加载失败，<a href="javascript:void(0)" onclick="loadQRCode(\'' + orderId + '\')" style="color:#2F5496;text-decoration:underline;">点击重试</a></div>';
+    }
+  }
+  tryLoad();
+}
+
 function getTierPrice(tier) {
   return { free: 19.9, basic: 79.9, pro: 129.9 }[tier] || 0;
 }
