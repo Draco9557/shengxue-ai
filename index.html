@@ -1013,7 +1013,7 @@ function createPayment(tier) {
   .then(function(data) {
     if (data.qrcode) {
       var qrSrc = data.qrcode.indexOf('/') === 0 ? WORKER_URL + data.qrcode : data.qrcode;
-      document.getElementById('payQR').innerHTML = '<img src="' + qrSrc + '" alt="支付二维码" style="width:180px;height:180px;">';
+      document.getElementById('payQR').innerHTML = '<img src="' + qrSrc + '" alt="支付二维码" style="width:180px;height:180px;" onerror="this.onerror=null;document.getElementById(\'payQR\').innerHTML=\'<div style=\\\'text-align:center;padding:20px 0;\\\'><p style=\\\'font-size:14px;color:#999;margin-bottom:8px;\\\'>\u4e8c\u7ef4\u7801\u52a0\u8f7d\u5931\u8d25</p><button onclick=\\\'buyTier(\\\'\' + tier + \'\\\')\\\' style=\\\'background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;\\\'>\u91cd\u8bd5</button></div>\';document.getElementById(\'payStatus\').textContent=\'\u4e8c\u7ef4\u7801\u52a0\u8f7d\u5931\u8d25\';return false;">';
       document.getElementById('payStatus').textContent = '\u8bf7\u4f7f\u7528\u5fae\u4fe1\u626b\u7801\u652f\u4ed8';
       startPolling(data.order_id, tier);
     } else if (data.pay_url) {
