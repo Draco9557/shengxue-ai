@@ -993,13 +993,13 @@ function createPayment(tier) {
   document.getElementById('payDesc').textContent = tier === 'basic' ? '\u89e3\u9501\u5b9a\u5236\u5316\u5206\u6790\u62a5\u544a + 30\u5206\u949fAI\u5bf9\u8bdd' : '\u89e3\u9501\u5168\u90e8\u529f\u80fd + \u4e0d\u9650\u65f6AI\u5bf9\u8bdd';
   document.getElementById('payStatus').textContent = '\u6b63\u5728\u751f\u6210\u8ba2\u5355...';
   document.getElementById('payStatus').className = 'pay-status';
-  document.getElementById('payQR').innerHTML = '<div style="font-size:13px;color:#999;">\u52a0\u8f7d\u4e2d...</div>';
+  document.getElementById('payQR').innerHTML = '<div class="qr-spinner"></div><div style="font-size:13px;color:#999;text-align:center;">\u52a0\u8f7d\u4e8c\u7ef4\u7801...</div>';
   document.getElementById('payCloseBtn').style.display = 'none';
   document.getElementById('payModal').classList.add('show');
   if (!WORKER_URL) {
     document.getElementById('payStatus').textContent = '\u6d4b\u8bd5\u6a21\u5f0f\uff1a\u70b9\u51fb\u5b8c\u6210\u89e3\u9501';
-    document.getElementById('payCloseBtn').style.display = '';
-    document.getElementById('payCloseBtn').onclick = function() { closePayModal(); paidAmount += amountDue; localStorage.setItem('paid_amount', paidAmount.toString()); switchTier(tier); updateUpgradeUI(); };
+   document.getElementById('payCloseBtn').style.display = '';
+   document.getElementById('payCloseBtn').onclick = function() { closePayModal(); paidAmount += amountDue; localStorage.setItem('paid_amount', paidAmount.toString()); switchTier(tier); updateUpgradeUI(); };
     return;
   }
   fetch(WORKER_URL + '/pay/create', {
@@ -1019,11 +1019,13 @@ function createPayment(tier) {
       startPolling(data.order_id, tier);
    } else {
       document.getElementById('payStatus').textContent = '\u8ba2\u5355\u521b\u5efa\u5931\u8d25\uff1a' + (data.error || '\u8bf7\u91cd\u8bd5');
+      document.getElementById('payQR').innerHTML = '<div style="text-align:center;padding:20px 0;"><button onclick="buyTier(\'' + tier + '\')" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">\u91cd\u8bd5</button></div>';
    }
  })
-  .catch(function(err) {
-    document.getElementById('payStatus').textContent = '\u7f51\u7edc\u9519\u8bef\uff1a' + err.message;
-    document.getElementById('payCloseBtn').style.display = '';
+ .catch(function(err) {
+   document.getElementById('payStatus').textContent = '\u7f51\u7edc\u9519\u8bef\uff1a' + err.message;
+   document.getElementById('payCloseBtn').style.display = '';
+    document.getElementById('payQR').innerHTML = '<div style="text-align:center;padding:20px 0;"><p style="font-size:14px;color:#999;margin-bottom:8px;">\u7f51\u7edc\u5f02\u5e38\uff0c\u70b9\u51fb\u4e0b\u65b9\u6309\u94ae\u91cd\u8bd5</p><button onclick="buyTier(\'' + tier + '\')" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">\u91cd\u8bd5</button></div>';
   });
 }
 
