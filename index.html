@@ -529,11 +529,14 @@
   </div>
 </div>
 
-  <div style="position:fixed;bottom:16px;right:16px;font-size:20px;cursor:pointer;opacity:0.4;z-index:1001;" onclick="openAdminPanel()" title="管理工具">⚙️</div><!-- Admin Overlay -->
+  <div style="position:fixed;bottom:16px;right:16px;font-size:20px;cursor:pointer;opacity:0.4;z-index:1001;" onclick="openSettings()" title="设置">🔧</span>
+  <span style="font-size:20px;cursor:pointer;opacity:0.4;" onclick="openAdminPanel()" title="管理工具">⚙️</span>
+</div><!-- Admin Overlay -->
 <div class="admin-overlay" id="adminOverlay" onclick="closeAdminPanel()"></div>
 <!-- Admin Panel -->
 <div class="admin-panel" id="adminPanel">
   <h3>🔐 编码管理工具</h3>
+  <div style="text-align:right;font-size:12px;margin-bottom:8px;"><a href="javascript:void(0)" onclick="closeAdminPanel();openSettings();" style="color:var(--text-light);">🔗 配置 Worker 地址</a></div>
   <div class="admin-row">
     <select id="adminTier"><option value="free">体验版 ¥19.9</option><option value="basic">标准版 ¥79.9</option><option value="pro">深度版 ¥129.9</option></select>
     <input type="number" id="adminCount" value="5" min="1" max="100" style="width:60px;">
@@ -600,7 +603,7 @@
       <div class="pdf-icon"><span class="icon-text">7个问题</span></div>
       <div class="pdf-title">选专业前必须问自己的7个问题</div>
       <div class="pdf-desc">张雪峰式决策框架 · 就业倒推法<br/>花10分钟看完，避开80%的志愿坑</div>
-      <a class="download-btn" href="选专业前必须问自己的7个问题.pdf" download target="_blank" rel="noopener">📥 免费下载 PDF</a>
+      <a class="download-btn" href="assets/选专业前必须问自己的7个问题.pdf" download target="_blank" rel="noopener">📥 免费下载 PDF</a>
     </div>
     <div class="pdf-questions">
       <div class="q-item"><span class="q-num">1</span> 你孩子多少分？——没分谈什么专业</div>
@@ -668,7 +671,7 @@
     <div style="padding:0 16px;">
       <div style="background:#F0F4FF;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
         <span>📖</span>
-<span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
+<span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('assets/选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
       </div>
     </div>
     <div style="text-align:center;padding:16px;">
@@ -720,7 +723,7 @@
     <div style="padding:0 16px 16px;">
       <div style="background:#F0F4FF;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;">
         <span>📖</span>
-        <span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
+        <span><b>随单附赠：</b><a href="javascript:void(0)" onclick="var w=window.open('assets/选专业前必须问自己的7个问题.pdf');if(w)w.focus();else alert('请允许弹出窗口');" style="color:var(--primary);text-decoration:underline;">选专业前必须问自己的7个问题.pdf</a> — 张雪峰式决策清单，帮你自我排查志愿坑</span>
       </div>
     </div>
   </div>
@@ -959,9 +962,9 @@ let contextWarningCount = 0;
 const MAX_CONTEXT_WARNINGS = 3;
 let timerInterval = null;
 let pollTimer = null;
-const WORKER_URL = 'https://shengxue-ai-proxy.draco95570.workers.dev'; // 部署后改为 合并后 Worker 的地址
-const AI_WORKER_URL = WORKER_URL; // 与 WORKER_URL 相同（合并后为同一个 Worker）
-let userId = localStorage.getItem('user_id') || '';
+var WORKER_URL = localStorage.getItem('worker_url') || 'https://shengxue-ai-proxy.draco95570.workers.dev';
+var AI_WORKER_URL = WORKER_URL;
+let userId = '';
 let secondsLeft = 0;
 const BASIC_TIME = 30 * 60; // 30 min
 const PRO_TIME = 999 * 60;  // effectively unlimited
@@ -976,42 +979,29 @@ let userDataLoaded = false;
 // Payment Flow (XorPay + Cloudflare Workers)
 // =====================================================
 function createPayment(tier) {
-  if (!userId) {
-    userId = 'u' + Date.now().toString(36) + Math.random().toString(36).substr(2, 8);
-    localStorage.setItem('user_id', userId);
+  if (!savedCode) {
+    document.getElementById('codeLoginScreen').classList.remove('hidden');
+    return;
   }
   var prices = { basic: 79.9, pro: 129.9 };
   var amountDue = Math.max(0, prices[tier] - paidAmount);
-
-  // Show payment modal
-  document.getElementById('payTitle').textContent = paidAmount > 0 ? '升级补差价' : '购买套餐';
-  document.getElementById('payAmount').textContent = '\u00a5' + (paidAmount > 0 ? '补' + amountDue.toFixed(1) : amountDue.toFixed(1));
-  document.getElementById('payDesc').textContent = tier === 'basic' ? '解锁定制化分析报告 + 30分钟AI对话' : '解锁全部功能 + 不限时AI对话';
-  document.getElementById('payStatus').textContent = '正在生成订单...';
+  document.getElementById('payTitle').textContent = paidAmount > 0 ? '\u5347\u7ea7\u8865\u5dee\u4ef7' : '\u8d2d\u4e70\u5957\u9910';
+  document.getElementById('payAmount').textContent = '\u00a5' + (paidAmount > 0 ? '\u8865' + amountDue.toFixed(1) : amountDue.toFixed(1));
+  document.getElementById('payDesc').textContent = tier === 'basic' ? '\u89e3\u9501\u5b9a\u5236\u5316\u5206\u6790\u62a5\u544a + 30\u5206\u949fAI\u5bf9\u8bdd' : '\u89e3\u9501\u5168\u90e8\u529f\u80fd + \u4e0d\u9650\u65f6AI\u5bf9\u8bdd';
+  document.getElementById('payStatus').textContent = '\u6b63\u5728\u751f\u6210\u8ba2\u5355...';
   document.getElementById('payStatus').className = 'pay-status';
-  document.getElementById('payQR').innerHTML = '<div style="font-size:13px;color:#999;">加载中...</div>';
+  document.getElementById('payQR').innerHTML = '<div style="font-size:13px;color:#999;">\u52a0\u8f7d\u4e2d...</div>';
   document.getElementById('payCloseBtn').style.display = 'none';
   document.getElementById('payModal').classList.add('show');
-
   if (!WORKER_URL) {
-    // 本地测试模式：直接模拟支付成功
-    document.getElementById('payStatus').textContent = '测试模式：点击完成解锁';
+    document.getElementById('payStatus').textContent = '\u6d4b\u8bd5\u6a21\u5f0f\uff1a\u70b9\u51fb\u5b8c\u6210\u89e3\u9501';
     document.getElementById('payCloseBtn').style.display = '';
-    document.getElementById('payCloseBtn').onclick = function() {
-      closePayModal();
-      paidAmount += amountDue;
-      localStorage.setItem('paid_amount', paidAmount.toString());
-      switchTier(tier);
-      updateUpgradeUI();
-    };
+    document.getElementById('payCloseBtn').onclick = function() { closePayModal(); paidAmount += amountDue; localStorage.setItem('paid_amount', paidAmount.toString()); switchTier(tier); updateUpgradeUI(); };
     return;
   }
-
-  // 生产模式：调 Worker API
   fetch(WORKER_URL + '/pay/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tier: tier, user_id: userId })
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tier: tier, code: savedCode })
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
@@ -1019,11 +1009,14 @@ function createPayment(tier) {
       document.getElementById('payQR').innerHTML = '<img src="' + data.qrcode + '" alt="\u652f\u4ed8\u4e8c\u7ef4\u7801" style="width:180px;height:180px;">';
       document.getElementById('payStatus').textContent = '\u8bf7\u4f7f\u7528\u5fae\u4fe1\u626b\u7801\u652f\u4ed8';
       startPolling(data.order_id, tier);
-    } else {
-      document.getElementById('payStatus').textContent = '\u8ba2\u5355\u521b\u5efa\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5';
-      document.getElementById('payCloseBtn').style.display = '';
-    }
-  })
+    } else if (data.pay_url) {
+      document.getElementById('payQR').innerHTML = '<div style="text-align:center;"><p style="font-size:14px;margin-bottom:8px;">\u8bf7\u70b9\u51fb\u4e0b\u65b9\u6309\u94ae\u5b8c\u6210\u652f\u4ed8</p><a href="' + data.pay_url + '" target="_blank" style="display:inline-block;background:#2F5496;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">\u7acb\u5373\u652f\u4ed8</a></div>';
+      document.getElementById('payStatus').textContent = '\u8bf7\u5728\u6253\u5f00\u7684\u9875\u9762\u4e2d\u5b8c\u6210\u652f\u4ed8';
+      startPolling(data.order_id, tier);
+   } else {
+      document.getElementById('payStatus').textContent = '\u8ba2\u5355\u521b\u5efa\u5931\u8d25\uff1a' + (data.error || '\u8bf7\u91cd\u8bd5');
+   }
+ })
   .catch(function(err) {
     document.getElementById('payStatus').textContent = '\u7f51\u7edc\u9519\u8bef\uff1a' + err.message;
     document.getElementById('payCloseBtn').style.display = '';
@@ -1037,43 +1030,28 @@ function startPolling(orderId, tier) {
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.status === 'paid') {
-          clearInterval(pollTimer);
-          pollTimer = null;
+          clearInterval(pollTimer); pollTimer = null;
           document.getElementById('payStatus').textContent = '\u2705 \u652f\u4ed8\u6210\u529f\uff01\u6b63\u5728\u89e3\u9501...';
           document.getElementById('payStatus').className = 'pay-status done';
           document.getElementById('payCloseBtn').style.display = '';
           document.getElementById('payCloseBtn').onclick = function() {
             closePayModal();
-            fetchUserStatus(tier);
+            restoreUserSession().then(function() { switchTier(tier); updateUpgradeUI(); });
           };
           setTimeout(function() { document.getElementById('payCloseBtn').click(); }, 1500);
         } else if (data.status === 'failed') {
           document.getElementById('payStatus').textContent = '\u274c \u652f\u4ed8\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5';
           document.getElementById('payCloseBtn').style.display = '';
-          clearInterval(pollTimer);
-          pollTimer = null;
+          clearInterval(pollTimer); pollTimer = null;
         }
       });
   }, 2000);
 }
 
-function fetchUserStatus(fromTier) {
-  if (!WORKER_URL || !userId) return;
-  fetch(WORKER_URL + '/user/status?user_id=' + userId)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.paid_amount > 0) {
-        paidAmount = data.paid_amount;
-        localStorage.setItem('paid_amount', paidAmount.toString());
-        if (fromTier) switchTier(fromTier);
-        updateUpgradeUI();
-      }
-    });
-}
-
 function closePayModal() {
   document.getElementById('payModal').classList.remove('show');
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  document.getElementById('payCloseBtn').style.display = 'none';
 }
 
 // =====================================================
@@ -1125,14 +1103,12 @@ function extractStudentContext(text) {
 function checkContextChange(newText) {
   if (!studentContext) return null;
   var nc = extractStudentContext(newText);
-  var oc = JSON.parse(studentContext);
+  var oc;
+  try { oc = JSON.parse(studentContext); } catch { return null; }
   var ws = [];
-  if (nc.score && oc.score && Math.abs(+nc.score - +oc.score) > 50)
-    ws.push('\u4e4b\u524d\u95ee' + oc.score + '\u5206\uff0c\u73b0\u5728\u95ee' + nc.score + '\u5206');
-  if (nc.province && oc.province && nc.province !== oc.province)
-    ws.push('\u4e4b\u524d\u95ee' + oc.province + '\uff0c\u73b0\u5728\u95ee' + nc.province);
-  if (nc.subjects && oc.subjects && nc.subjects !== oc.subjects)
-    ws.push('\u4e4b\u524d\u95ee' + oc.subjects + '\uff0c\u73b0\u5728\u95ee' + nc.subjects);
+  if (nc.score && oc.score && Math.abs(+nc.score - +oc.score) > 50) ws.push('\u4e4b\u524d\u95ee' + oc.score + '\u5206\uff0c\u73b0\u5728\u95ee' + nc.score + '\u5206');
+  if (nc.province && oc.province && nc.province !== oc.province) ws.push('\u4e4b\u524d\u95ee' + oc.province + '\uff0c\u73b0\u5728\u95ee' + nc.province);
+  if (nc.subjects && oc.subjects && nc.subjects !== oc.subjects) ws.push('\u4e4b\u524d\u95ee' + oc.subjects + '\uff0c\u73b0\u5728\u95ee' + nc.subjects);
   return ws.length > 0 ? ws.join('\uff1b') : null;
 }
 
@@ -1220,6 +1196,7 @@ function switchTier(tier) {
     }
     document.querySelector('.chat-header .info').textContent = '💬 AI升学咨询 · 30分钟版';
     document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '✅ 已连接' : '⏳ AI服务配置中...';
+    if (basicTimerStarted && secondsLeft > 0) { startTimer(); }
   } else if (isPro) {
     if (!userDataLoaded) {
       secondsLeft = PRO_TIME;
@@ -1414,13 +1391,10 @@ async function sendMessage() {
 
     saveUserData();
 
-    // Store student context for anti-abuse
-    if (!studentContext && messages.filter(function(m) { return m.role === 'user'; }).length >= 1) {
-      var ctx = extractStudentContext(text);
-      if (ctx.score || ctx.province) {
-        studentContext = JSON.stringify(ctx);
-        localStorage.setItem('student_context', studentContext);
-      }
+    var ctx = extractStudentContext(text);
+    if (ctx.score || ctx.province || ctx.subjects) {
+      studentContext = JSON.stringify(ctx);
+      localStorage.setItem('student_context', studentContext);
     }
   } catch (err) {
     loadingBubble.classList.remove('loading');
@@ -1510,7 +1484,7 @@ function applyUserData(user) {
   userDataLoaded = true;
 
   localStorage.setItem('paid_amount', paidAmount.toString());
-  localStorage.setItem('user_id', 'usr-' + savedCode);
+  // userId no longer used
 
   // Update user badge
   var badge = document.getElementById('userBadge');
@@ -1583,7 +1557,7 @@ async function saveUserData() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: savedCode,
-        messages: messages,
+        messages: messages.slice(-50),
         trial_count: trialCount,
         timer_remaining: secondsLeft,
         timer_started: basicTimerStarted
@@ -1659,6 +1633,11 @@ function copyCodes() {
   }
 }
 
+
+
+function openSettings() { document.getElementById('workerUrlInput').value = localStorage.getItem('worker_url') || WORKER_URL; document.getElementById('settingsOverlay').classList.add('show'); }
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+function saveWorkerUrl() { var url = document.getElementById('workerUrlInput').value.trim(); if (url) { localStorage.setItem('worker_url', url); WORKER_URL = url; AI_WORKER_URL = url; } closeSettings(); document.getElementById('chatStatus').textContent = AI_WORKER_URL ? '\u2705 \u5df2\u8fde\u63a5' : '\u23f3 AI\u670d\u52a1\u914d\u7f6e\u4e2d...'; }
 </script>
 <!-- Payment Modal -->
 <div class="pay-modal" id="payModal">
@@ -1675,5 +1654,23 @@ function copyCodes() {
   </div>
 </div>
 
+
+
+<!-- Settings Overlay -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <h3>&#x2699;&#xFE0F; &#x8BBE;&#x7F6E;</h3>
+    <p style="font-size:12px;margin-bottom:10px;">&#x914D;&#x7F6E; Worker &#x540E;&#x7AEF;&#x5730;&#x5740;</p>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;color:var(--text);font-weight:600;">Worker &#x5730;&#x5740;</label>
+      <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev" style="margin-top:4px;">
+      <p style="font-size:11px;color:var(--text-light);margin-top:4px;">&#x90E8;&#x7F72;&#x5408;&#x5E76;&#x540E; Worker &#x7684;&#x5B8C;&#x6574; URL</p>
+    </div>
+    <button class="btn" onclick="saveWorkerUrl()">&#x4FDD;&#x5B58;</button>
+    <div style="text-align:center;margin-top:6px;">
+      <button class="link-btn" onclick="closeSettings()">&#x53D6;&#x6D88;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
