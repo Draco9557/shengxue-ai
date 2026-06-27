@@ -1006,7 +1006,8 @@ function createPayment(tier) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (data.qrcode) {
-      document.getElementById('payQR').innerHTML = '<img src="' + data.qrcode + '" alt="\u652f\u4ed8\u4e8c\u7ef4\u7801" style="width:180px;height:180px;">';
+      var qrSrc = data.qrcode.indexOf('/') === 0 ? WORKER_URL + data.qrcode : data.qrcode;
+      document.getElementById('payQR').innerHTML = '<img src="' + qrSrc + '" alt="支付二维码" style="width:180px;height:180px;">';
       document.getElementById('payStatus').textContent = '\u8bf7\u4f7f\u7528\u5fae\u4fe1\u626b\u7801\u652f\u4ed8';
       startPolling(data.order_id, tier);
     } else if (data.pay_url) {
