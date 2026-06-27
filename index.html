@@ -1022,7 +1022,7 @@ function createPayment(tier) {
       startPolling(data.order_id, tier);
    } else {
       document.getElementById('payStatus').textContent = '\u8ba2\u5355\u521b\u5efa\u5931\u8d25\uff1a' + (data.error || '\u8bf7\u91cd\u8bd5');
-      document.getElementById('payQR').innerHTML = '<div style="text-align:center;padding:20px 0;"><button onclick="buyTier(\'' + tier + '\')" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">\u91cd\u8bd5</button></div>' + (data.debug ? '<div style="font-size:11px;color:#999;text-align:left;padding:8px;word-break:break-all;max-height:200px;overflow-y:auto;margin-top:8px;">' + data.debug + '</div>' : '');
+      document.getElementById('payQR').innerHTML = '<div style="text-align:center;padding:20px 0;"><button onclick="buyTier(\'' + tier + '\')" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">\u91cd\u8bd5</button></div>';
    }
  })
  .catch(function(err) {
