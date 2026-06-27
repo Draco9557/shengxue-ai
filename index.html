@@ -1086,7 +1086,7 @@ function loadQRCode(orderId) {
       setTimeout(tryLoad, 1000);
     } else {
       window._qrRetry = 0;
-      qrDiv.innerHTML = '<div style="font-size:13px;color:#999;">二维码加载失败，<a href="javascript:void(0)" onclick="loadQRCode(\'' + orderId + '\')" style="color:#2F5496;text-decoration:underline;">点击重试</a></div>';
+      qrDiv.innerHTML = '<div style="font-size:14px;color:#999;text-align:center;padding:20px 0;">二维码加载失败，请点击下方按钮重试<br><br><button onclick="window.location.reload()" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">重试</button></div>';
     }
   }
   tryLoad();
