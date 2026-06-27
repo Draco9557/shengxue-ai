@@ -507,6 +507,9 @@
   .admin-panel .admin-result .code-list { font-family:monospace; font-size:14px; line-height:1.8; word-break:break-all; }
   .admin-panel .admin-result .copy-btn { margin-top:8px; padding:6px 12px; background:var(--primary-light); color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
 
+
+  .qr-spinner { width:40px;height:40px;border:4px solid #e0e0e0;border-top:4px solid #2F5496;border-radius:50%;animation:qrspin .8s linear infinite;margin:10px auto; }
+  @keyframes qrspin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -1061,11 +1064,12 @@ function closePayModal() {
 // Load QR code image with auto-retry
 function loadQRCode(orderId) {
   if (window._qrRetry === undefined) window._qrRetry = 0;
-  var maxRetries = 5;
+  var maxRetries = 3;
   var qrDiv = document.getElementById('payQR');
   function tryLoad() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', WORKER_URL + '/pay/qr-image?order_id=' + orderId, true);
+    xhr.timeout = 8000;
     xhr.onload = function() {
       if (xhr.status === 200) {
         var resp = JSON.parse(xhr.responseText);
@@ -1078,12 +1082,13 @@ function loadQRCode(orderId) {
       retryOrFail();
     };
     xhr.onerror = retryOrFail;
+    xhr.ontimeout = retryOrFail;
     xhr.send();
   }
   function retryOrFail() {
     window._qrRetry++;
     if (window._qrRetry <= maxRetries) {
-      setTimeout(tryLoad, 1000);
+      setTimeout(tryLoad, 2000);
     } else {
       window._qrRetry = 0;
       qrDiv.innerHTML = '<div style="font-size:14px;color:#999;text-align:center;padding:20px 0;">二维码加载失败，请点击下方按钮重试<br><br><button onclick="window.location.reload()" style="background:#2F5496;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">重试</button></div>';
